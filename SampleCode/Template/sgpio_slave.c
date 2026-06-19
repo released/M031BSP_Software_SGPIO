@@ -85,22 +85,6 @@ static void sgpio_reset_capture_state(void)
     g_sgpio_last_clock_tick = 0UL;
 }
 
-static uint8_t sgpio_get_pin(GPIO_T *port, uint32_t pin_mask)
-{
-    uint8_t value;
-
-    if ((GPIO_GET_IN_DATA(port) & pin_mask) != 0UL)
-    {
-        value = 1U;
-    }
-    else
-    {
-        value = 0U;
-    }
-
-    return value;
-}
-
 static void sgpio_store_sdata_bit(uint8_t bit_value)
 {
     uint16_t bit_index;
@@ -668,8 +652,8 @@ void GPCDEF_IRQHandler(void)
     sclk_pending = GPIO_GET_INT_FLAG(SGPIO_SLAVE_SCLK_PORT, SGPIO_SLAVE_SCLK_PIN_MASK);
     if (sclk_pending != 0UL)
     {
-        sload_sample = sgpio_get_pin(SGPIO_SLAVE_SLOAD_PORT, SGPIO_SLAVE_SLOAD_PIN_MASK);
-        sdata_sample = sgpio_get_pin(SGPIO_SLAVE_SDOUT_PORT, SGPIO_SLAVE_SDOUT_PIN_MASK);
+        sload_sample = SGPIO_SLAVE_SLOAD_IO;
+        sdata_sample = SGPIO_SLAVE_SDOUT_IO;
         GPIO_CLR_INT_FLAG(SGPIO_SLAVE_SCLK_PORT, SGPIO_SLAVE_SCLK_PIN_MASK);
         SGPIO_OnClockRisingSampledIrq(sload_sample, sdata_sample);
     }

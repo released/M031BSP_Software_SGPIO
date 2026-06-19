@@ -108,49 +108,50 @@ The current receiver uses `SCLK` as the only active SGPIO receive interrupt.
 
 1. `SLOAD` is normally high before a frame.
 2. The SGPIO initiator drives `SLOAD` low for the low-sync run.
-3. On every `SCLK` rising edge, `PC6` triggers the shared GPIO port ISR `GPCDEF_IRQHandler()`.
-4. At IRQ entry, firmware immediately samples:
-   - `PA6 / SLOAD`
-   - `PA7 / SDATA OUT`
+3. On every `GPIO : SCLOCK` rising edge, the shared GPIO port ISR runs.
+4. At ISR entry, firmware immediately samples:
+   - `GPIO : SLOAD`
+   - `GPIO : SDATA OUT`
 5. `SGPIO_OnClockRisingSampledIrq(sload_sample, sdata_sample)` updates the in-RAM capture state.
 6. While `SLOAD=0`, the receiver counts low-sync clocks.
-7. After at least `SGPIO_LOW_SYNC_MIN_BITS` low clocks, a `SLOAD=1` sample on a `SCLK` rising edge is treated as the restart marker.
+7. After at least `SGPIO_LOW_SYNC_MIN_BITS` low clocks, a `SLOAD=1` sample on a `GPIO : SCLOCK` rising edge is treated as the restart marker.
 8. The restart-marker clock is not stored as slot data.
-9. The next four SCLK rising edges provide `SLOAD L0..L3 Raw`.
+9. The next four `GPIO : SCLOCK` rising edges provide `SLOAD L0..L3 Raw`.
 10. `SDATA OUT` slot bits start immediately after the marker and are captured in parallel with the `L0..L3` clocks.
 11. Each slot consumes three `SDATA OUT` bits in this order:
     - bit 0: `ACT`
     - bit 1: `LOCATE`
     - bit 2: `FAIL`
-12. `SGPIO_Process()` finalizes the frame after `SGPIO_FRAME_GAP_TIMEOUT_MS` with no new SCLK edge, then decodes and logs the result.
+12. `SGPIO_Process()` finalizes the frame after `SGPIO_FRAME_GAP_TIMEOUT_MS` with no new `GPIO : SCLOCK` edge, then decodes and logs the result.
 
 ```mermaid
 flowchart TD
-    A["Idle: SLOAD high"] --> B["Initiator drives SLOAD low"]
-    B --> C["SCLK rising edge on PC6 GPIO"]
-    C --> D["ISR samples PA6=SLOAD and PA7=SDATA OUT"]
-    D --> E{"SLOAD == 0?"}
-    E -->|Yes| F["Count low-sync clocks"]
-    F --> C
-    E -->|No| G{"Low-sync count >= minimum?"}
-    G -->|No| H["Ignore as in-frame/noise sample"]
-    H --> C
-    G -->|Yes| I["Restart marker detected"]
-    I --> J["Skip marker bit; arm frame capture"]
-    J --> K["Capture SLOAD L0..L3 on next 4 SCLK edges"]
-    K --> L["Capture SDATA OUT slot triplets: ACT, LOCATE, FAIL"]
-    L --> M{"No SCLK before frame-gap timeout?"}
-    M -->|No| C
-    M -->|Yes| N["SGPIO_Process finalizes frame"]
-    N --> O["Copy ISR result, decode masks, rate-limit log"]
+    A["Idle: GPIO : SLOAD high"] --> B["Initiator drives GPIO : SLOAD low"]
+    B --> C["GPIO : SCLOCK rising edge"]
+    C --> D["Shared GPIO ISR runs immediately"]
+    D --> E["Sample GPIO : SLOAD and GPIO : SDATA OUT"]
+    E --> F{"GPIO : SLOAD == 0?"}
+    F -->|Yes| G["Count low-sync clocks"]
+    G --> C
+    F -->|No| H{"Low-sync count >= minimum?"}
+    H -->|No| I["Ignore as in-frame/noise sample"]
+    I --> C
+    H -->|Yes| J["Restart marker detected"]
+    J --> K["Skip marker bit; arm frame capture"]
+    K --> L["Capture GPIO : SLOAD L0..L3 on next 4 GPIO : SCLOCK edges"]
+    L --> M["Capture GPIO : SDATA OUT slot triplets: ACT, LOCATE, FAIL"]
+    M --> N{"No GPIO : SCLOCK before frame-gap timeout?"}
+    N -->|No| C
+    N -->|Yes| O["SGPIO_Process finalizes frame"]
+    O --> P["Copy ISR result, decode masks, rate-limit log"]
 ```
 
 Important ISR rule:
 
-- `GPCDEF_IRQHandler()` is a shared GPIO port handler; the `PC6 / SCLK` flag check must remain the first top-level branch.
-- Any future unrelated GPIO interrupt handling must be added below the `PC6 / SCLK` block so SGPIO sampling is not delayed.
+- `GPCDEF_IRQHandler()` is a shared GPIO port handler; the `GPIO : SCLOCK` flag check must remain the first top-level branch.
+- Any future unrelated GPIO interrupt handling must be added below the `GPIO : SCLOCK` block so SGPIO sampling is not delayed.
 - `SLOAD` falling/rising edges do not create frame events by themselves in this implementation.
-- `SLOAD` is only meaningful when sampled at `SCLK` rising edge.
+- `SLOAD` is only meaningful when sampled at `GPIO : SCLOCK` rising edge.
 - This avoids treating in-frame `SLOAD L0..L3` transitions as false frame starts.
 
 ## Raw Bit Decode
@@ -293,7 +294,7 @@ Logic analyzer channels used by the captured examples:
 Decode rule reminder:
 
 - `SLOAD` low run plus a sampled `SLOAD=1` restart marker defines the frame boundary.
-- `SDATA OUT` is sampled on every `SCLK` rising edge after the restart marker.
+- `SDATA OUT` is sampled on every `SCLOCK` rising edge after the restart marker.
 - Each slot is decoded as a 3-bit triplet: `Sx=ACT,LOCATE,FAIL`.
 - Raw bytes are decoded LSB-first, so `raw: 38 8E C3 00` does not read like a normal MSB-left binary string.
 
