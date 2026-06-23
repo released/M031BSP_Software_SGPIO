@@ -2,7 +2,7 @@
 
 M031 SGPIO target/slave example for validating SGPIO initiator traffic.
 
-Update: `2026/06/19`
+Update: `2026/06/23`
 
 ## Overview
 
@@ -38,18 +38,20 @@ Update: `2026/06/19`
 | `UART0_RXD` | `PB12` | Input | Debug UART RX |
 | `UART0_TXD` | `PB13` | Output | Debug UART TX |
 | `HEARTBEAT_LED` | `PB14` | Output | Toggles while main loop is alive |
-| `SGPIO_SLOAD` | `PA6` | Input | Sampled by `SCLK`; no SLOAD IRQ is enabled |
-| `SGPIO_SDATAOUT` | `PA7` | Input | Sampled by `SCLK`; data IRQ is disabled |
-| `SGPIO_SCLK` | `PC6` | Input | Shared GPIO port ISR rising-edge sampler |
+| `SGPIO_SLOAD` | `PA3` | Input | Sampled by `SCLK`; no SLOAD IRQ is enabled |
+| `SGPIO_SDATAOUT` | `PA0` | Input | Sampled by `SCLK`; data IRQ is disabled |
+| `SGPIO_SCLK` | `PA2` | Input | Shared GPIO port ISR rising-edge sampler |
 | `GND` | `GND` | Ground | Common ground with SGPIO initiator |
+
+Default SGPIO pin map is `SGPIO_SLAVE_PINMAP_PA0_PA2_PA3`. The previously verified `PA6/PA7/PC6` wiring remains selectable with `SGPIO_SLAVE_PINMAP_LEGACY_PA6_PA7_PC6` in `SampleCode/Template/sgpio_slave.h`.
 
 External SGPIO wiring:
 
 | Initiator signal | Direction into M032 | M032 pin |
 | --- | --- | --- |
-| `SCLK` | Input clock | `PC6 GPIO input` |
-| `SDATA OUT` | Input data | `PA7 GPIO input` |
-| `SLOAD` | Input frame marker | `PA6 GPIO input` |
+| `SCLK` | Input clock | `PA2 GPIO input` |
+| `SDATA OUT` | Input data | `PA0 GPIO input` |
+| `SLOAD` | Input frame marker | `PA3 GPIO input` |
 | `GND` | Common reference | `GND` |
 
 ## Build Environment
@@ -83,9 +85,9 @@ Expected boot log includes the timer task IDs and SGPIO pin-role messages:
 task1 id = 0
 task2 id = 1
 task3 id = 2
-PA6/SLOAD GPIO input sampled by SCLK
-PA7/SDATAOUT GPIO input sampled by SCLK
-PC6/SCLK shared GPIO ISR rising sampler
+PA3/SLOAD GPIO input sampled by SCLK
+PA0/SDATAOUT GPIO input sampled by SCLK
+PA2/SCLK shared GPIO ISR rising sampler
 SGPIO GPIO ISR RX path, no SDATAIN TX
 ```
 
@@ -98,9 +100,40 @@ Reference power-on log:
 The main loop must remain lightweight:
 
 1. `TimerService_Dispatch()` keeps periodic tasks alive.
-2. `SGPIO_Process()` only finalizes completed frames, copies the ISR-built result, decodes it, and prints rate-limited logs.
+2. `SGPIO_Process()` only finalizes completed frames, copies the ISR-built result, decodes it, runs application behavior, and prints rate-limited logs.
 3. SGPIO bit capture is not done in the polling loop.
 4. `printf()` must not be called from the SGPIO ISR.
+
+### Application Hook
+
+Accepted SGPIO frames are copied into `local_frame`, decoded into `act_mask / locate_mask / fail_mask`, and then passed to the application hook:
+
+```c
+sgpio_app_frame(&local_frame);
+```
+
+`sgpio_app_frame()` walks each valid slot and calls `sgpio_app_slot(slot, act, locate, fail)`. `sgpio_app_slot()` is the intended place to add product behavior with a slot-based `switch` statement.
+
+Example use:
+
+```c
+case 0U:
+    if (act != 0U)
+    {
+        /* Slot 0 ACT asserted: set the expected device/GPIO/LED state here. */
+    }
+    if (locate != 0U)
+    {
+        /* Slot 0 LOCATE asserted: set the expected device/GPIO/LED state here. */
+    }
+    if (fail != 0U)
+    {
+        /* Slot 0 FAIL asserted: set the expected device/GPIO/LED state here. */
+    }
+    break;
+```
+
+The application hook runs after a stable frame is accepted and is intentionally outside the debug `printf()` rate limit. Keep hook code non-blocking. Prefer setting outputs to the decoded state instead of toggling on every repeated SGPIO frame, unless repeated toggling is the intended behavior.
 
 ### SGPIO Signal Handling Flow
 
@@ -143,12 +176,15 @@ flowchart TD
     M --> N{"No GPIO : SCLOCK before frame-gap timeout?"}
     N -->|No| C
     N -->|Yes| O["SGPIO_Process finalizes frame"]
-    O --> P["Copy ISR result, decode masks, rate-limit log"]
+    O --> P["Copy ISR result and decode masks"]
+    P --> Q["Run sgpio_app_frame application hook"]
+    Q --> R["Rate-limit debug log"]
 ```
 
 Important ISR rule:
 
-- `GPCDEF_IRQHandler()` is a shared GPIO port handler; the `GPIO : SCLOCK` flag check must remain the first top-level branch.
+- `SGPIO_SLAVE_GPIO_IRQHandler` maps to the selected shared GPIO port handler; default `PA2/SCLK` uses `GPABGH_IRQHandler()`, while legacy `PC6/SCLK` uses `GPCDEF_IRQHandler()`.
+- The `GPIO : SCLOCK` flag check must remain the first top-level branch.
 - Any future unrelated GPIO interrupt handling must be added below the `GPIO : SCLOCK` block so SGPIO sampling is not delayed.
 - `SLOAD` falling/rising edges do not create frame events by themselves in this implementation.
 - `SLOAD` is only meaningful when sampled at `GPIO : SCLOCK` rising edge.
@@ -338,20 +374,36 @@ Main config files:
 Important public pin macros:
 
 ```c
+#define SGPIO_SLAVE_PINMAP_LEGACY_PA6_PA7_PC6 (0U)
+#define SGPIO_SLAVE_PINMAP_PA0_PA2_PA3        (1U)
+
+#ifndef SGPIO_SLAVE_PINMAP
+#define SGPIO_SLAVE_PINMAP                    SGPIO_SLAVE_PINMAP_PA0_PA2_PA3
+#endif
+
 #define SGPIO_SLAVE_SLOAD_PORT           (PA)
-#define SGPIO_SLAVE_SLOAD_PIN_NUM        (6UL)
-#define SGPIO_SLAVE_SLOAD_PIN_MASK       (BIT6)
+#define SGPIO_SLAVE_SLOAD_PIN_NUM        (3UL)
+#define SGPIO_SLAVE_SLOAD_PIN_MASK       (BIT3)
 
 #define SGPIO_SLAVE_SDOUT_PORT           (PA)
-#define SGPIO_SLAVE_SDOUT_PIN_NUM        (7UL)
-#define SGPIO_SLAVE_SDOUT_PIN_MASK       (BIT7)
+#define SGPIO_SLAVE_SDOUT_PIN_NUM        (0UL)
+#define SGPIO_SLAVE_SDOUT_PIN_MASK       (BIT0)
 
-#define SGPIO_SLAVE_SCLK_PORT            (PC)
-#define SGPIO_SLAVE_SCLK_PIN_NUM         (6UL)
-#define SGPIO_SLAVE_SCLK_PIN_MASK        (BIT6)
+#define SGPIO_SLAVE_SCLK_PORT            (PA)
+#define SGPIO_SLAVE_SCLK_PIN_NUM         (2UL)
+#define SGPIO_SLAVE_SCLK_PIN_MASK        (BIT2)
+
+#define SGPIO_SLAVE_GPIO_IRQn            (GPIO_PAPBPGPH_IRQn)
+#define SGPIO_SLAVE_GPIO_IRQHandler      GPABGH_IRQHandler
 
 #define SGPIO_SLAVE_MAX_SLOTS            (16U)
 #define SGPIO_SLAVE_RX_MAX_BYTES         (8U)
+```
+
+To restore the verified legacy wiring, set:
+
+```c
+#define SGPIO_SLAVE_PINMAP SGPIO_SLAVE_PINMAP_LEGACY_PA6_PA7_PC6
 ```
 
 Important internal timing/filter macros:
@@ -370,7 +422,7 @@ Important internal timing/filter macros:
 
 ## Test Flow
 
-1. Connect the SGPIO initiator `SCLK/SDATA OUT/SLOAD/GND` to M032 `PC6/PA7/PA6/GND`.
+1. Connect the SGPIO initiator `SCLK/SDATA OUT/SLOAD/GND` to M032 `PA2/PA0/PA3/GND`.
 2. Open a UART terminal on M032 `UART0`, `115200 8N1`.
 3. Power on or reset M032.
 4. Confirm the SGPIO startup log appears.
@@ -427,9 +479,11 @@ Scope / logic analyzer:
 
 - This implementation is RX-only for the M032 target.
 - `SDATA IN` target-to-initiator transmit is intentionally not implemented yet.
-- `PA7` remains a plain GPIO input in this implementation; `SDATA OUT` is sampled only by the `SCLK` rising ISR.
-- `PA6 / SLOAD` interrupt is disabled; `SLOAD` is sampled only by the `SCLK` rising ISR.
+- `PA0` remains a plain GPIO input in the default pin map; `SDATA OUT` is sampled only by the `SCLK` rising ISR.
+- `PA3 / SLOAD` interrupt is disabled in the default pin map; `SLOAD` is sampled only by the `SCLK` rising ISR.
+- The legacy verified `PA6/PA7/PC6` SGPIO wiring remains available through `SGPIO_SLAVE_PINMAP`.
 - Keep `SGPIO_Process()` non-blocking. It should finalize/copy/decode/print only.
+- Keep `sgpio_app_frame()` and `sgpio_app_slot()` non-blocking. Use them for slot `ACT / LOCATE / FAIL` application behavior after stable frame decode.
 - Keep capture ownership in the `SCLK` rising-edge sampling path unless the timing model is re-evaluated.
 - Before publishing, confirm this README contains no local absolute paths or sensitive directory names.
 
@@ -449,4 +503,6 @@ Scope / logic analyzer:
 
 ## Revision
 
+- `2026/06/23`: documented `sgpio_app_frame()` / `sgpio_app_slot()` application hook for slot `ACT / LOCATE / FAIL` behavior.
+- `2026/06/23`: changed default SGPIO pin map to `PA2/PA0/PA3` and kept verified `PC6/PA7/PA6` wiring selectable by define.
 - `2026/06/19`: initial README draft for shared GPIO port ISR SGPIO target/slave implementation.

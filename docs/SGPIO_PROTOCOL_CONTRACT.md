@@ -12,12 +12,12 @@ This file is the shared SGPIO interface contract between an SGPIO initiator/mast
 
 | Initiator pin / signal | Signal | M032 pin | M032 function |
 | --- | --- | --- | --- |
-| SCLK | SCLK | PC6 | Shared GPIO port rising-edge sampler |
-| SDATA OUT | SDATA OUT | PA7 | GPIO input, sampled by SCLK |
-| SLOAD | SLOAD | PA6 | Input, sampled by SCLK |
+| SCLK | SCLK | PA2 | Shared GPIO port rising-edge sampler |
+| SDATA OUT | SDATA OUT | PA0 | GPIO input, sampled by SCLK |
+| SLOAD | SLOAD | PA3 | Input, sampled by SCLK |
 | GND | Ground | GND | Ground |
 
-PA6 and PA7 remain plain GPIO inputs in this implementation. Only PC6/SCLK enables a GPIO interrupt; SDATAOUT and SLOAD are sampled only on SCLK rising edges to avoid data-edge interrupt flooding or false frame starts.
+PA0 and PA3 remain plain GPIO inputs in the default pin map. Only PA2/SCLK enables a GPIO interrupt; SDATAOUT and SLOAD are sampled only on SCLK rising edges to avoid data-edge interrupt flooding or false frame starts. The verified legacy PA6/PA7/PC6 wiring remains selectable with `SGPIO_SLAVE_PINMAP_LEGACY_PA6_PA7_PC6`.
 
 ## Standards Boundary
 
@@ -56,10 +56,11 @@ Frame sequence:
 
 The current M032 reference slave is RX-only and uses SCLK-synchronous GPIO sampling for SGPIO.
 
-- PC6/SCLK rising edge samples both `SLOAD` and `SDATA OUT` immediately at IRQ entry.
-- PA6/SLOAD does not generate an interrupt. The receiver detects the restart marker only from SCLK-synchronous samples, which prevents an in-frame `SLOAD L0` transition from being mistaken as a new frame start.
-- PA7 is configured as the `SDATA OUT` GPIO input pin, but its interrupt is not enabled.
-- `GPCDEF_IRQHandler()` is a shared GPIO port handler; the PC6/SCLK flag check must remain the first top-level branch.
+- PA2/SCLK rising edge samples both `SLOAD` and `SDATA OUT` immediately at IRQ entry.
+- PA3/SLOAD does not generate an interrupt. The receiver detects the restart marker only from SCLK-synchronous samples, which prevents an in-frame `SLOAD L0` transition from being mistaken as a new frame start.
+- PA0 is configured as the `SDATA OUT` GPIO input pin, but its interrupt is not enabled.
+- `SGPIO_SLAVE_GPIO_IRQHandler` maps to the selected shared GPIO port handler; default PA2/SCLK uses `GPABGH_IRQHandler()`, while legacy PC6/SCLK uses `GPCDEF_IRQHandler()`.
+- The selected SCLK flag check must remain the first top-level branch.
 - The ISR only updates capture state and raw bits. It does not print, drain FIFOs, or busy-wait.
 - `SGPIO_Process()` finalizes a frame after a short clock-gap timeout, copies the ISR-built frame, decodes `ACT/LOCATE/FAIL`, and prints rate-limited diagnostics.
 - A new low-sync run followed by a SCLK-sampled `SLOAD=1` marker is treated as the authoritative frame boundary.
@@ -70,9 +71,9 @@ The current M032 reference slave is RX-only and uses SCLK-synchronous GPIO sampl
 Expected startup log:
 
 ```text
-PA6/SLOAD GPIO input sampled by SCLK
-PA7/SDATAOUT GPIO input sampled by SCLK
-PC6/SCLK shared GPIO ISR rising sampler
+PA3/SLOAD GPIO input sampled by SCLK
+PA0/SDATAOUT GPIO input sampled by SCLK
+PA2/SCLK shared GPIO ISR rising sampler
 SGPIO GPIO ISR RX path, no SDATAIN TX
 ```
 
@@ -112,8 +113,8 @@ Validated initiator reference:
 
 M032 receiver:
 
-- PC6/SCLK rising edge is the only SGPIO receive ISR path.
-- PA6/SLOAD is sampled on each PC6/SCLK rising edge; no SLOAD edge interrupt is used.
+- PA2/SCLK rising edge is the only SGPIO receive ISR path in the default pin map.
+- PA3/SLOAD is sampled on each PA2/SCLK rising edge; no SLOAD edge interrupt is used.
 - A frame is finalized by `SGPIO_Process()` when no SCLK edge arrives for `SGPIO_FRAME_GAP_TIMEOUT_MS`.
 - SGPIO frame debug logging is rate-limited: the first frame is printed, then at most once per second. This prevents UART `printf` back-pressure from starving `TimerService_Dispatch()` and stopping the heartbeat LED while periodic send is enabled.
 - Each complete SGPIO frame/debug block ends with one blank line so TeraTerm logs stay readable during periodic send.

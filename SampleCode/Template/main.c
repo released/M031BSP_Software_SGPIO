@@ -485,10 +485,16 @@ int main()
     TimerService_CreateTask();
     
     /*
-        SGPIO SCLK -> M032 PC6 GPIO input, shared GPIO port ISR rising sampler
-        SGPIO SDATA OUT -> M032 PA7 GPIO input, sampled by SCLK
-        SGPIO SLOAD -> M032 PA6 GPIO input, sampled by SCLK
-    */
+     * SGPIO pin map is selected in sgpio_slave.h.
+     * Active default:
+     *   SGPIO SCLK      -> M032 PA2 GPIO input, shared GPIO port ISR rising sampler
+     *   SGPIO SDATA OUT -> M032 PA0 GPIO input, sampled by SCLK
+     *   SGPIO SLOAD     -> M032 PA3 GPIO input, sampled by SCLK
+     * Legacy verified I/O is kept selectable:
+     *   SGPIO SCLK      -> M032 PC6 GPIO input, shared GPIO port ISR rising sampler
+     *   SGPIO SDATA OUT -> M032 PA7 GPIO input, sampled by SCLK
+     *   SGPIO SLOAD     -> M032 PA6 GPIO input, sampled by SCLK
+     */
     SGPIO_Init();
 
     /* Got no where to go, just loop forever */

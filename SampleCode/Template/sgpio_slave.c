@@ -376,6 +376,293 @@ static void sgpio_print_frame(const SGPIO_FRAME_T *frame)
     printf("\r\n");
 }
 
+static void sgpio_app_slot(uint8_t slot, uint8_t act, uint8_t locate, uint8_t fail)
+{
+    switch (slot)
+    {
+    case 0U:
+        /*
+         * Slot 0 application hook.
+         * Replace the comments below with product behavior, such as setting
+         * GPIO/LED/device state. Prefer setting outputs to the decoded state
+         * instead of toggling on every repeated SGPIO frame unless repeated
+         * toggle behavior is intentionally required.
+         */
+        if (act != 0U)
+        {
+            /* Slot 0 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 0 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 0 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 1U:
+        if (act != 0U)
+        {
+            /* Slot 1 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 1 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 1 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 2U:
+        if (act != 0U)
+        {
+            /* Slot 2 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 2 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 2 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 3U:
+        if (act != 0U)
+        {
+            /* Slot 3 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 3 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 3 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 4U:
+        if (act != 0U)
+        {
+            /* Slot 4 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 4 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 4 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 5U:
+        if (act != 0U)
+        {
+            /* Slot 5 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 5 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 5 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 6U:
+        if (act != 0U)
+        {
+            /* Slot 6 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 6 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 6 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 7U:
+        if (act != 0U)
+        {
+            /* Slot 7 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 7 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 7 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 8U:
+        if (act != 0U)
+        {
+            /* Slot 8 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 8 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 8 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 9U:
+        if (act != 0U)
+        {
+            /* Slot 9 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 9 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 9 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 10U:
+        if (act != 0U)
+        {
+            /* Slot 10 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 10 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 10 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 11U:
+        if (act != 0U)
+        {
+            /* Slot 11 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 11 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 11 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 12U:
+        if (act != 0U)
+        {
+            /* Slot 12 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 12 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 12 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 13U:
+        if (act != 0U)
+        {
+            /* Slot 13 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 13 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 13 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 14U:
+        if (act != 0U)
+        {
+            /* Slot 14 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 14 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 14 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    case 15U:
+        if (act != 0U)
+        {
+            /* Slot 15 ACT asserted: insert expected behavior here. */
+        }
+        if (locate != 0U)
+        {
+            /* Slot 15 LOCATE asserted: insert expected behavior here. */
+        }
+        if (fail != 0U)
+        {
+            /* Slot 15 FAIL asserted: insert expected behavior here. */
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+static void sgpio_app_frame(const SGPIO_FRAME_T *frame)
+{
+    uint8_t slot;
+    uint8_t act;
+    uint8_t locate;
+    uint8_t fail;
+    uint16_t bit_index;
+    uint16_t slot_mask;
+
+    if ((frame->valid == 0U) || (frame->overflow != 0U))
+    {
+        return;
+    }
+
+    for (slot = 0U; slot < SGPIO_DECODE_SLOT_COUNT; slot++)
+    {
+        bit_index = (uint16_t)(slot * SGPIO_DATA_BITS_PER_SLOT);
+        if ((uint16_t)(bit_index + 2U) >= frame->bit_count)
+        {
+            break;
+        }
+
+        slot_mask = (uint16_t)(1UL << slot);
+        act = (uint8_t)(((frame->act_mask & slot_mask) != 0U) ? 1U : 0U);
+        locate = (uint8_t)(((frame->locate_mask & slot_mask) != 0U) ? 1U : 0U);
+        fail = (uint8_t)(((frame->fail_mask & slot_mask) != 0U) ? 1U : 0U);
+
+        sgpio_app_slot(slot, act, locate, fail);
+    }
+}
+
 static uint8_t sgpio_frame_same(const SGPIO_FRAME_T *a, const SGPIO_FRAME_T *b)
 {
     uint8_t i;
@@ -587,6 +874,13 @@ void SGPIO_Process(void)
     }
     memcpy(&g_sgpio_last_frame, &local_frame, sizeof(g_sgpio_last_frame));
 
+    /*
+     * Run product behavior for every stable accepted frame. Keep this outside
+     * the debug log rate limit so SGPIO host commands are not delayed by
+     * printf throttling.
+     */
+    sgpio_app_frame(&local_frame);
+
     if ((local_frame.frame_count <= SGPIO_FRAME_LOG_FIRST_N) ||
         ((unsigned long)(now - g_sgpio_last_log_tick) >= SGPIO_FRAME_LOG_MIN_INTERVAL_MS))
     {
@@ -603,8 +897,14 @@ void SGPIO_Init(void)
      * Keep SGPIO pins in GPIO function mode. The receiver uses the shared
      * GPIO port ISR; SLOAD and SDATA OUT are sampled synchronously by SCLK.
      */
+#if (SGPIO_SLAVE_PINMAP == SGPIO_SLAVE_PINMAP_PA0_PA2_PA3)
+    SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA0MFP_Msk |
+                       SYS_GPA_MFPL_PA2MFP_Msk |
+                       SYS_GPA_MFPL_PA3MFP_Msk);
+#elif (SGPIO_SLAVE_PINMAP == SGPIO_SLAVE_PINMAP_LEGACY_PA6_PA7_PC6)
     SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA6MFP_Msk | SYS_GPA_MFPL_PA7MFP_Msk);
     SYS->GPC_MFPL &= ~(SYS_GPC_MFPL_PC6MFP_Msk);
+#endif
 
     SYS_LockReg();
 
@@ -630,13 +930,13 @@ void SGPIO_Init(void)
     NVIC_ClearPendingIRQ(SGPIO_SLAVE_GPIO_IRQn);
     NVIC_EnableIRQ(SGPIO_SLAVE_GPIO_IRQn);
 
-    printf("PA6/SLOAD GPIO input sampled by SCLK\r\n");
-    printf("PA7/SDATAOUT GPIO input sampled by SCLK\r\n");
-    printf("PC6/SCLK shared GPIO ISR rising sampler\r\n");
+    printf("%s/SLOAD GPIO input sampled by SCLK\r\n", SGPIO_SLAVE_SLOAD_PIN_NAME);
+    printf("%s/SDATAOUT GPIO input sampled by SCLK\r\n", SGPIO_SLAVE_SDOUT_PIN_NAME);
+    printf("%s/SCLK shared GPIO ISR rising sampler\r\n", SGPIO_SLAVE_SCLK_PIN_NAME);
     printf("SGPIO GPIO ISR RX path, no SDATAIN TX\r\n");
 }
 
-void GPCDEF_IRQHandler(void)
+void SGPIO_SLAVE_GPIO_IRQHandler(void)
 {
     uint32_t sclk_pending;
     uint8_t sload_sample;
@@ -644,8 +944,8 @@ void GPCDEF_IRQHandler(void)
 
     /*
      * Shared GPIO port ISR rule:
-     * the PC6/SCLK bit check must remain the first top-level branch in this
-     * common GPIO handler. SGPIO depends on every PC6/SCLK rising edge, so
+     * the selected SCLK bit check must remain the first top-level branch in
+     * this common GPIO handler. SGPIO depends on every SCLK rising edge, so
      * future unrelated GPIO handling must be added below this block and must
      * not delay the SCLK sampling path.
      */
